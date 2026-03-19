@@ -69,6 +69,19 @@ const ResultCard = ({ title, result, sellPrice, qty, includeShipping, incomeTaxR
       </div>
       
       <div className="p-5 flex-1 flex flex-col gap-6">
+        {/* Actual ROAS Highlight if present */}
+        {result.roas_actual > 0 && (
+          <div className="bg-blue-500/10 rounded-xl p-3 border border-blue-500/20 flex justify-between items-center mb-[-12px]">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-blue-400" />
+              <span className="text-xs font-medium text-blue-400 uppercase tracking-wider">Mevcut ROAS</span>
+            </div>
+            <span className={`text-lg font-bold ${result.roas_actual >= result.roas_basabas ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {result.roas_actual.toFixed(2)}
+            </span>
+          </div>
+        )}
+
         {/* Net Profit Highlight */}
         <div className={`rounded-xl p-4 border flex justify-between items-center relative overflow-hidden transition-colors ${result.netProfit < 0 ? 'bg-rose-500/10 border-rose-500/20' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
           <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl ${result.netProfit < 0 ? 'bg-rose-500/20' : 'bg-emerald-500/20'}`}></div>
@@ -191,6 +204,7 @@ export default function App() {
   const [posComm, setPosComm] = useState<number | ''>('');
   const [incomeTaxRate, setIncomeTaxRate] = useState<number | ''>('');
   const [kdv2Enabled, setKdv2Enabled] = useState<boolean>(true);
+  const [adSpend, setAdSpend] = useState<number | ''>('');
   
   // Bundle Inputs
   const [bundleEnabled, setBundleEnabled] = useState<boolean>(false);
@@ -206,6 +220,7 @@ export default function App() {
     const sComm = Number(shopifyComm) || 0;
     const pComm = Number(posComm) || 0;
     const taxRate = Number(incomeTaxRate) || 0;
+    const adCost = Number(adSpend) || 0;
 
     const vRate = vatRate / 100;
     
@@ -232,7 +247,7 @@ export default function App() {
     kdv_odenecek = Math.max(0, kdv_odenecek); // Devreden KDV is not paid this month
 
     // Gross Profit
-    const profit_brut = s_exVat - c_exVat - sh_exVat - expenseComm;
+    const profit_brut = s_exVat - c_exVat - sh_exVat - expenseComm - (adCost * qty);
 
     // Income Tax
     const tax_gelir = Math.max(0, profit_brut * (taxRate / 100));
@@ -247,6 +262,7 @@ export default function App() {
     const numerator = sellPrice;
     const denominator = sellPrice - totalExpenses;
     const roas_basabas = denominator > 0 ? numerator / denominator : 0;
+    const roas_actual = adCost > 0 ? sellPrice / (adCost * qty) : 0;
     
     return {
       s_exVat,
@@ -262,6 +278,7 @@ export default function App() {
       netProfit,
       netMargin,
       roas_basabas,
+      roas_actual,
       roas_kötü: roas_basabas > 0 ? roas_basabas * 0.8 : 0,
       roas_iyii: roas_basabas > 0 ? roas_basabas * 1.5 : 0
     };
@@ -393,6 +410,15 @@ export default function App() {
                 <div className="pt-4">
                   <InputField label="Gelir Vergisi Oranı" value={incomeTaxRate} onChange={setIncomeTaxRate} suffix="%" />
                 </div>
+              </div>
+
+              <h2 className="text-lg font-semibold mb-6 mt-8 flex items-center gap-2 text-white relative z-10">
+                <TrendingUp className="w-5 h-5 text-emerald-500" />
+                Reklam Giderleri (Opsiyonel)
+              </h2>
+              <div className="mb-2 relative z-10">
+                <InputField label="Satış Başı Reklam Harcaması" value={adSpend} onChange={setAdSpend} suffix="₺" />
+                <p className="text-[10px] text-neutral-500 mt-2">Bu değer girilirse Net Kazanç ve ROAS buna göre hesaplanır.</p>
               </div>
             </div>
 
