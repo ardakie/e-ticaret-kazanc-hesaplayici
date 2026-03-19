@@ -242,10 +242,8 @@ export default function App() {
     const netMargin = sellPrice > 0 ? (netProfit / sellPrice) * 100 : 0;
 
     // ROAS Logic
-    // beROAS = Sales / (Sales - Costs - Comm - Shipping)
-    const expenses = c_exVat + (includeShipping ? sh_exVat : 0) + commTotal;
-    const contribution = s_exVat - expenses;
-    const roas_basabas = contribution > 0 ? s_exVat / contribution : 0;
+    // beROAS = Sales (Full) / Net Profit (available for ads)
+    const roas_basabas = netProfit > 0 ? sellPrice / netProfit : 0;
     
     return {
       s_exVat,
