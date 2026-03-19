@@ -70,15 +70,31 @@ const ResultCard = ({ title, result, sellPrice, qty, includeShipping, incomeTaxR
       
       <div className="p-5 flex-1 flex flex-col gap-6">
         {/* Net Profit Highlight */}
-        <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/20 flex justify-between items-center relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl"></div>
+        <div className={`rounded-xl p-4 border flex justify-between items-center relative overflow-hidden transition-colors ${result.netProfit < 0 ? 'bg-rose-500/10 border-rose-500/20' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
+          <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl ${result.netProfit < 0 ? 'bg-rose-500/20' : 'bg-emerald-500/20'}`}></div>
           <div className="relative z-10">
-            <p className="text-xs font-medium text-emerald-400/80 uppercase tracking-wider mb-1">Net Kazanç</p>
-            <p className="text-3xl font-bold text-emerald-400">{formatCurrency(result.netProfit)}</p>
+            <p className={`text-xs font-medium uppercase tracking-wider mb-1 ${result.netProfit < 0 ? 'text-rose-400/80' : 'text-emerald-400/80'}`}>Net Kazanç</p>
+            <p className={`text-3xl font-bold ${result.netProfit < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>{formatCurrency(result.netProfit)}</p>
           </div>
           <div className="text-right relative z-10">
-            <p className="text-xs font-medium text-emerald-400/80 uppercase tracking-wider mb-1">Kar Marjı</p>
-            <p className="text-2xl font-bold text-emerald-400">%{result.netMargin.toFixed(1)}</p>
+            <p className={`text-xs font-medium uppercase tracking-wider mb-1 ${result.netProfit < 0 ? 'text-rose-400/80' : 'text-emerald-400/80'}`}>Kar Marjı</p>
+            <p className={`text-2xl font-bold ${result.netProfit < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>%{result.netMargin.toFixed(1)}</p>
+          </div>
+        </div>
+
+        {/* ROAS Targets */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-neutral-950/50 p-2 rounded-lg border border-neutral-800/50 text-center">
+            <p className="text-[10px] font-medium text-rose-500 uppercase tracking-tighter mb-1">Kötü ROAS</p>
+            <p className="text-sm font-bold text-rose-400">{result.roas_kötü.toFixed(2)}</p>
+          </div>
+          <div className="bg-neutral-950/50 p-2 rounded-lg border border-neutral-800 text-center ring-1 ring-emerald-500/20">
+            <p className="text-[10px] font-medium text-emerald-500 uppercase tracking-tighter mb-1">Başabaş ROAS</p>
+            <p className="text-sm font-bold text-emerald-400">{result.roas_basabas.toFixed(2)}</p>
+          </div>
+          <div className="bg-neutral-950/50 p-2 rounded-lg border border-neutral-800/50 text-center">
+            <p className="text-[10px] font-medium text-blue-500 uppercase tracking-tighter mb-1">Çok İyi ROAS</p>
+            <p className="text-sm font-bold text-blue-400">{result.roas_iyii.toFixed(2)}</p>
           </div>
         </div>
 
@@ -225,6 +241,12 @@ export default function App() {
     const netProfit = profit_brut - tax_gelir;
     const netMargin = sellPrice > 0 ? (netProfit / sellPrice) * 100 : 0;
 
+    // ROAS Logic
+    // beROAS = Sales / (Sales - Costs - Comm - Shipping)
+    const expenses = c_exVat + (includeShipping ? sh_exVat : 0) + commTotal;
+    const contribution = s_exVat - expenses;
+    const roas_basabas = contribution > 0 ? s_exVat / contribution : 0;
+    
     return {
       s_exVat,
       kdv_satis,
@@ -237,7 +259,10 @@ export default function App() {
       profit_brut,
       tax_gelir,
       netProfit,
-      netMargin
+      netMargin,
+      roas_basabas,
+      roas_kötü: roas_basabas > 0 ? roas_basabas * 0.8 : 0,
+      roas_iyii: roas_basabas > 0 ? roas_basabas * 1.5 : 0
     };
   };
 

@@ -1,12 +1,14 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import {viteSingleFile} from 'vite-plugin-singlefile';
 import {defineConfig, loadEnv} from 'vite';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
-    plugins: [react(), tailwindcss()],
+    base: './',
+    plugins: [react(), tailwindcss(), viteSingleFile()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
