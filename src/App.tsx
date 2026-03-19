@@ -190,7 +190,6 @@ export default function App() {
   const [shopifyComm, setShopifyComm] = useState<number | ''>('');
   const [posComm, setPosComm] = useState<number | ''>('');
   const [incomeTaxRate, setIncomeTaxRate] = useState<number | ''>('');
-  const [kdv2Enabled, setKdv2Enabled] = useState<boolean>(true);
   
   // Bundle Inputs
   const [bundleEnabled, setBundleEnabled] = useState<boolean>(false);
@@ -225,14 +224,13 @@ export default function App() {
 
     // Commissions
     const commTotal = sellPrice * ((sComm + pComm) / 100);
-    const expenseComm = kdv2Enabled ? commTotal : 0; // If KDV2 is processed, it's an official expense
 
     // VAT to Pay (Devlet)
     let kdv_odenecek = kdv_satis - kdv_alis - kdv_kargo;
     kdv_odenecek = Math.max(0, kdv_odenecek); // Devreden KDV is not paid this month
 
     // Gross Profit
-    const profit_brut = s_exVat - c_exVat - sh_exVat - expenseComm;
+    const profit_brut = s_exVat - c_exVat - sh_exVat - commTotal;
 
     // Income Tax
     const tax_gelir = Math.max(0, profit_brut * (taxRate / 100));
@@ -264,8 +262,8 @@ export default function App() {
     };
   };
 
-  const singleResult = useMemo(() => calculate(price, 1), [price, cost, costIncludesVat, shipping, includeShipping, vatRate, shopifyComm, posComm, incomeTaxRate, kdv2Enabled]);
-  const bundleResult = useMemo(() => calculate(bundlePrice, bundleQty), [bundlePrice, bundleQty, cost, costIncludesVat, shipping, includeShipping, vatRate, shopifyComm, posComm, incomeTaxRate, kdv2Enabled]);
+  const singleResult = useMemo(() => calculate(price, 1), [price, cost, costIncludesVat, shipping, includeShipping, vatRate, shopifyComm, posComm, incomeTaxRate]);
+  const bundleResult = useMemo(() => calculate(bundlePrice, bundleQty), [bundlePrice, bundleQty, cost, costIncludesVat, shipping, includeShipping, vatRate, shopifyComm, posComm, incomeTaxRate]);
 
   // Recommended Price Logic (Exact Mathematical Calculation for 20% Net Margin)
   const recommendedPrices = useMemo(() => {
@@ -282,7 +280,7 @@ export default function App() {
     const sh_exVat = activeShipping / 1.20;
 
     const C_fixed = c_exVat + sh_exVat;
-    const S_factor = (1 / (1 + vRate)) - (((sComm + pComm) / 100) * (kdv2Enabled ? 1 : 0));
+    const S_factor = (1 / (1 + vRate)) - ((sComm + pComm) / 100);
     const taxMultiplier = 1 - (taxRate / 100);
 
     const calculatePriceForMargin = (targetMargin: number) => {
@@ -302,7 +300,7 @@ export default function App() {
       margin20: calculatePriceForMargin(0.20),
       margin25: calculatePriceForMargin(0.25),
     };
-  }, [cost, costIncludesVat, shipping, includeShipping, vatRate, shopifyComm, posComm, incomeTaxRate, kdv2Enabled]);
+  }, [cost, costIncludesVat, shipping, includeShipping, vatRate, shopifyComm, posComm, incomeTaxRate]);
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-200 font-sans pb-20 selection:bg-emerald-500/30">
@@ -380,14 +378,8 @@ export default function App() {
                 <InputField label="POS Komisyonu" value={posComm} onChange={setPosComm} suffix="%" />
               </div>
 
-              <div className="space-y-1 mb-2 relative z-10">
-                <Toggle 
-                  label="KDV2 / Gider Olarak Göster" 
-                  description="Komisyonları resmi gider göstererek gelir vergisinden düşer."
-                  enabled={kdv2Enabled} 
-                  onChange={setKdv2Enabled} 
-                />
-                <div className="pt-4">
+              <div className="space-y-4 mb-2 relative z-10">
+                <div className="pt-2">
                   <InputField label="Gelir Vergisi Oranı" value={incomeTaxRate} onChange={setIncomeTaxRate} suffix="%" />
                 </div>
               </div>
